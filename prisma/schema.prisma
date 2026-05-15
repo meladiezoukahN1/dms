@@ -1,0 +1,580 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// =======================
+// ENUMS
+// =======================
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum CorrespondenceDirection {
+  INCOMING
+  OUTGOING
+  INTERNAL
+}
+
+enum CorrespondenceSourceType {
+  DIGITAL_GENERATED
+  SCANNED_PHYSICAL
+  IMPORTED_FILE
+}
+
+enum CorrespondenceStatus {
+  DRAFT
+  GENERATED
+  UNDER_REVIEW
+  APPROVED
+  PRINTED
+  SENT
+  RECEIVED
+  ARCHIVED
+  CANCELLED
+}
+
+enum CorrespondencePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ConfidentialityLevel {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  SECRET
+  TOP_SECRET
+}
+
+enum FileProvider {
+  LOCAL
+  VERCEL_BLOB
+  S3
+  CLOUDINARY
+}
+
+enum FilePurpose {
+  TEMPLATE_SOURCE
+  GENERATED_PDF
+  SCANNED_DOCUMENT
+  ATTACHMENT
+  SIGNED_COPY
+  STAMPED_COPY
+  ARCHIVE_COPY
+}
+
+enum FileVisibility {
+  PRIVATE
+  INTERNAL
+  PUBLIC_APPROVED
+}
+
+enum ArchiveStatus {
+  ACTIVE
+  ARCHIVED
+  UNDER_REVIEW
+  DISPOSED
+  RETAINED
+}
+
+enum TemplateStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  GENERATE_PDF
+  PRINT
+  SCAN_UPLOAD
+  APPROVE
+  REJECT
+  ARCHIVE
+  RESTORE
+  STATUS_CHANGE
+  ERROR
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  USER_REGISTERED
+}
+
+enum AuditEntityType {
+  USER
+  CORRESPONDENCE
+  ARCHIVE_RECORD
+  FILE
+  TEMPLATE
+  DEPARTMENT
+  EXTERNAL_ENTITY
+  SYSTEM
+}
+
+// =======================
+// USERS / ORG
+// =======================
+
+model User {
+  id           String @id @default(cuid())
+  fullName     String
+  email        String @unique
+  passwordHash String
+
+  accountType      String?
+  organizationName String?
+
+  status AccountStatus @default(PENDING)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdCorrespondence Correspondence[]     @relation("CorrespondenceCreatedBy")
+  archiveRecords        ArchiveRecord[]      @relation("ArchiveCreatedBy")
+  passwordResetTokens   PasswordResetToken[]
+}
+
+model Department {
+  id          String  @id @default(cuid())
+  name        String
+  code        String? @unique
+  description String?
+
+  parentId String?
+  parent   Department?  @relation("DepartmentTree", fields: [parentId], references: [id])
+  children Department[] @relation("DepartmentTree")
+
+  users User[]
+
+  senderCorrespondence   Correspondence[] @relation("SenderDepartment")
+  receiverCorrespondence Correspondence[] @relation("ReceiverDepartment")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model ExternalEntity {
+  id      String  @id @default(cuid())
+  name    String
+  code    String? @unique
+  address String?
+  phone   String?
+  email   String?
+  notes   String?
+
+  senderCorrespondence   Correspondence[] @relation("SenderEntity")
+  receiverCorrespondence Correspondence[] @relation("ReceiverEntity")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// =======================
+// TEMPLATES
+// =======================
+
+model DocumentTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  code        String         @unique
+  description String?
+  status      TemplateStatus @default(ACTIVE)
+
+  // Example: outgoing-letter, internal-memo, visit-request
+  type String
+
+  // JSON field definitions used by the form and preview renderer
+  fieldsSchema Json
+
+  // Template layout config: header, footer, logo, positions, margins
+  layoutSchema Json
+
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  correspondences Correspondence[]
+
+  @@index([status])
+  @@index([type])
+  @@index([deletedAt])
+}
+
+// =======================
+// CORRESPONDENCE
+// =======================
+
+model Correspondence {
+  id String @id @default(cuid())
+
+  // Official numbers
+  referenceNumber String? @unique
+  sequenceNumber  Int?
+  year            Int
+
+  title   String
+  subject String?
+  body    String?
+
+  direction  CorrespondenceDirection
+  sourceType CorrespondenceSourceType
+  status     CorrespondenceStatus     @default(DRAFT)
+
+  priority        CorrespondencePriority @default(NORMAL)
+  confidentiality ConfidentialityLevel   @default(INTERNAL)
+
+  // Sender/receiver can be internal department or external entity
+  senderDepartmentId String?
+  senderDepartment   Department? @relation("SenderDepartment", fields: [senderDepartmentId], references: [id])
+
+  receiverDepartmentId String?
+  receiverDepartment   Department? @relation("ReceiverDepartment", fields: [receiverDepartmentId], references: [id])
+
+  senderEntityId String?
+  senderEntity   ExternalEntity? @relation("SenderEntity", fields: [senderEntityId], references: [id])
+
+  receiverEntityId String?
+  receiverEntity   ExternalEntity? @relation("ReceiverEntity", fields: [receiverEntityId], references: [id])
+
+  templateId String?
+  template   DocumentTemplate? @relation(fields: [templateId], references: [id])
+
+  // Values entered from the left-side form and rendered in PDF/template
+  formData Json?
+
+  // Additional source-specific metadata (scanner info, import context, etc.)
+  metadata Json?
+
+  // Dates
+  correspondenceDate DateTime?
+  receivedAt         DateTime?
+  sentAt             DateTime?
+  printedAt          DateTime?
+  approvedAt         DateTime?
+  archivedAt         DateTime?
+
+  // Relations
+  parentId String?
+  parent   Correspondence?  @relation("CorrespondenceThread", fields: [parentId], references: [id])
+  children Correspondence[] @relation("CorrespondenceThread")
+
+  createdById String
+  createdBy   User   @relation("CorrespondenceCreatedBy", fields: [createdById], references: [id])
+
+  approvedById String?
+  printedById  String?
+
+  files         CorrespondenceFile[]
+  approvals     CorrespondenceApproval[]
+  archiveRecord ArchiveRecord?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([referenceNumber])
+  @@index([direction, status])
+  @@index([year, sequenceNumber])
+  @@index([createdById])
+  @@index([templateId])
+  @@index([sourceType])
+  @@index([status])
+  @@index([sourceType, status])
+  @@index([priority])
+  @@index([confidentiality])
+  @@index([correspondenceDate])
+  @@index([receivedAt])
+  @@index([sentAt])
+  @@index([approvedAt])
+  @@index([archivedAt])
+  @@index([senderDepartmentId])
+  @@index([receiverDepartmentId])
+  @@index([senderEntityId])
+  @@index([receiverEntityId])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+// =======================
+// FILES
+// =======================
+
+model StoredFile {
+  id String @id @default(cuid())
+
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+
+  provider   FileProvider
+  storageKey String       @unique
+  url        String?
+
+  checksum   String?
+  visibility FileVisibility @default(PRIVATE)
+
+  uploadedById String?
+  uploadedAt   DateTime @default(now())
+
+  correspondenceLinks CorrespondenceFile[]
+  archiveLinks        ArchiveFile[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([mimeType])
+  @@index([provider])
+  @@index([uploadedById])
+  @@index([uploadedAt])
+  @@index([visibility])
+  @@index([deletedAt])
+}
+
+model CorrespondenceFile {
+  id String @id @default(cuid())
+
+  correspondenceId String
+  correspondence   Correspondence @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
+
+  fileId String
+  file   StoredFile @relation(fields: [fileId], references: [id])
+
+  purpose FilePurpose
+  version Int         @default(1)
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@unique([correspondenceId, fileId, purpose])
+  @@index([correspondenceId])
+  @@index([fileId])
+  @@index([purpose])
+  @@index([createdAt])
+}
+
+// =======================
+// APPROVAL
+// =======================
+
+model CorrespondenceApproval {
+  id String @id @default(cuid())
+
+  correspondenceId String
+  correspondence   Correspondence @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
+
+  approverId String
+  status     ApprovalStatus @default(PENDING)
+  comment    String?
+
+  decidedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([correspondenceId])
+  @@index([approverId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// =======================
+// ARCHIVE
+// =======================
+
+model ArchiveFolder {
+  id   String  @id @default(cuid())
+  name String
+  code String? @unique
+
+  parentId String?
+  parent   ArchiveFolder?  @relation("ArchiveFolderTree", fields: [parentId], references: [id])
+  children ArchiveFolder[] @relation("ArchiveFolderTree")
+
+  description String?
+
+  archiveRecords ArchiveRecord[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model ArchiveClassification {
+  id          String  @id @default(cuid())
+  name        String
+  code        String  @unique
+  description String?
+
+  archiveRecords ArchiveRecord[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model RetentionPolicy {
+  id   String @id @default(cuid())
+  name String
+  code String @unique
+
+  // Null means permanent retention
+  retentionYears Int?
+
+  description String?
+
+  archiveRecords ArchiveRecord[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([retentionYears])
+  @@index([deletedAt])
+}
+
+model ArchiveRecord {
+  id String @id @default(cuid())
+
+  // Assigned in archive flow; unique when present
+  archiveNumber String? @unique
+  title         String
+  description   String?
+
+  // Archive-specific extra metadata (box, shelf, legal notes, etc.)
+  metadata Json?
+
+  correspondenceId String?         @unique
+  correspondence   Correspondence? @relation(fields: [correspondenceId], references: [id])
+
+  folderId String?
+  folder   ArchiveFolder? @relation(fields: [folderId], references: [id])
+
+  classificationId String
+  classification   ArchiveClassification @relation(fields: [classificationId], references: [id])
+
+  retentionPolicyId String?
+  retentionPolicy   RetentionPolicy? @relation(fields: [retentionPolicyId], references: [id])
+
+  confidentiality ConfidentialityLevel @default(INTERNAL)
+  status          ArchiveStatus        @default(ARCHIVED)
+
+  archivedAt   DateTime  @default(now())
+  disposalDate DateTime?
+
+  createdById String
+  createdBy   User   @relation("ArchiveCreatedBy", fields: [createdById], references: [id])
+
+  files ArchiveFile[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([archiveNumber])
+  @@index([classificationId])
+  @@index([folderId])
+  @@index([createdById])
+  @@index([status])
+  @@index([archivedAt])
+  @@index([retentionPolicyId])
+  @@index([confidentiality])
+  @@index([deletedAt])
+}
+
+model ArchiveFile {
+  id String @id @default(cuid())
+
+  archiveRecordId String
+  archiveRecord   ArchiveRecord @relation(fields: [archiveRecordId], references: [id], onDelete: Cascade)
+
+  fileId String
+  file   StoredFile @relation(fields: [fileId], references: [id])
+
+  purpose FilePurpose @default(ARCHIVE_COPY)
+
+  createdAt DateTime @default(now())
+
+  @@unique([archiveRecordId, fileId])
+  @@index([archiveRecordId])
+  @@index([fileId])
+  @@index([purpose])
+  @@index([createdAt])
+}
+
+// =======================
+// AUDIT
+// =======================
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  actorUserId String?
+  action      AuditAction
+  entityType  AuditEntityType
+  entityId    String?
+  metadata    Json?
+
+  requestId String?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([requestId])
+  @@index([action, createdAt])
+}
