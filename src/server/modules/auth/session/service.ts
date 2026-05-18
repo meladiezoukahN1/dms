@@ -3,10 +3,11 @@ import { getCurrentUser } from "@/server/core/auth/get-current-user";
 import { SessionPolicy } from "./policy";
 import { SessionRepository } from "./repository";
 import type { SessionUser } from "./types";
+import type { NextRequest } from "next/server";
 
 export class SessionService {
-  static async getCurrentSessionUser(): Promise<SessionUser> {
-    const currentUser = await getCurrentUser();
+  static async getCurrentSessionUser(request: NextRequest): Promise<SessionUser> {
+    const currentUser = await getCurrentUser(request);
     const currentUserId = currentUser?.id ?? null;
     SessionPolicy.assertAuthenticated(currentUserId);
 

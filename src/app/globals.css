@@ -51,29 +51,30 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b1220;
-    --foreground: #e5edf7;
-    --card: #121b2b;
-    --card-foreground: #e5edf7;
-    --popover: #121b2b;
-    --popover-foreground: #e5edf7;
-    --primary: #5fa8e5;
-    --primary-foreground: #081521;
-    --secondary: #1e293b;
-    --secondary-foreground: #e2e8f0;
-    --muted: #1e293b;
-    --muted-foreground: #9aa8bd;
-    --accent: #24324a;
-    --accent-foreground: #e5edf7;
-    --destructive: #f97066;
-    --destructive-foreground: #1f0e0d;
-    --border: #2a3b57;
-    --input: #2a3b57;
-    --ring: #5fa8e5;
-  }
+html.dark {
+  --background: #0b1220;
+  --foreground: #e5edf7;
+  --card: #121b2b;
+  --card-foreground: #e5edf7;
+  --popover: #121b2b;
+  --popover-foreground: #e5edf7;
+  --primary: #5fa8e5;
+  --primary-foreground: #081521;
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #9aa8bd;
+  --accent: #24324a;
+  --accent-foreground: #e5edf7;
+  --destructive: #f97066;
+  --destructive-foreground: #1f0e0d;
+  --border: #2a3b57;
+  --input: #2a3b57;
+  --ring: #5fa8e5;
 }
+
+/* Enable Tailwind dark: utilities when html has .dark class */
+@variant dark (&:where(.dark, .dark *));
 
 body {
   background: var(--background);
