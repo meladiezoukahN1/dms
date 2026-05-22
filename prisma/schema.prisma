@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // =======================
@@ -38,6 +37,7 @@ enum CorrespondenceStatus {
   PRINTED
   SENT
   RECEIVED
+  ARCHIVE_PENDING
   ARCHIVED
   CANCELLED
 }
@@ -152,9 +152,10 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  createdCorrespondence Correspondence[]     @relation("CorrespondenceCreatedBy")
-  archiveRecords        ArchiveRecord[]      @relation("ArchiveCreatedBy")
-  passwordResetTokens   PasswordResetToken[]
+  createdCorrespondence         Correspondence[]     @relation("CorrespondenceCreatedBy")
+  archiveHandoverCorrespondence Correspondence[]     @relation("CorrespondenceArchiveHandoverBy")
+  archiveRecords                ArchiveRecord[]      @relation("ArchiveCreatedBy")
+  passwordResetTokens           PasswordResetToken[]
 }
 
 model Department {
@@ -306,8 +307,12 @@ model Correspondence {
   createdById String
   createdBy   User   @relation("CorrespondenceCreatedBy", fields: [createdById], references: [id])
 
-  approvedById String?
-  printedById  String?
+  approvedById         String?
+  printedById          String?
+  archiveHandoverById  String?
+  archiveHandoverBy    User?     @relation("CorrespondenceArchiveHandoverBy", fields: [archiveHandoverById], references: [id])
+  archiveHandoverAt    DateTime?
+  archiveHandoverNotes String?
 
   files         CorrespondenceFile[]
   approvals     CorrespondenceApproval[]
@@ -321,6 +326,7 @@ model Correspondence {
   @@index([direction, status])
   @@index([year, sequenceNumber])
   @@index([createdById])
+  @@index([archiveHandoverById])
   @@index([templateId])
   @@index([sourceType])
   @@index([status])
@@ -332,6 +338,7 @@ model Correspondence {
   @@index([sentAt])
   @@index([approvedAt])
   @@index([archivedAt])
+  @@index([archiveHandoverAt])
   @@index([senderDepartmentId])
   @@index([receiverDepartmentId])
   @@index([senderEntityId])

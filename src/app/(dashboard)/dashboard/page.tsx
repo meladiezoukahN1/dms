@@ -1,9 +1,5 @@
-import React from 'react'
+import { DashboardHomePage } from '@/features/dashboard/home/components/dashboard-home-page';
 
-const Page = () => {
-  return (
-    <div>Page</div>
-  )
+export default function DashboardPage() {
+  return <DashboardHomePage />;
 }
-
-export default Page

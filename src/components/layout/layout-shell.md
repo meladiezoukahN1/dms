@@ -2,92 +2,109 @@
 
 ## Feature Name
 
-Dashboard Shell — Sidebar, Header, and Dark Mode
+Dashboard Shell — shadcn Sidebar RTL Adaptation
 
 ## Purpose
 
-Provides the shared layout shell for all dashboard routes. Includes:
+Provide a unified dashboard shell using the new shadcn sidebar system with:
 
-- Collapsible sidebar with navigation groups
-- Sticky header with page title, theme toggle, and user placeholder
-- Class-based dark mode (html.dark) with localStorage persistence and system preference detection
+- Arabic RTL-first behavior
+- mobile drawer behavior via `SidebarProvider`/`SidebarTrigger`
+- grouped navigation for current routes
+- route-aware title and breadcrumb in header
 
 ## Current Scope
 
-- `DashboardShell` — client wrapper that owns mobile sidebar state
-- `DashboardSidebar` — desktop always-visible + mobile overlay sidebar
-- `DashboardHeader` — sticky header with theme toggle, page title area, mobile trigger
-- `ThemeToggle` — client theme button that persists preference to localStorage
-- `navigation-items.ts` — navigation data (server-safe, no client marker)
-- CSS dark mode variables under `html.dark` in globals.css
-- Inline theme init script in root layout `<head>` to prevent FOUC
+- `DashboardShell` composes `SidebarProvider` + `AppSidebar` + `SidebarInset`
+- `AppSidebar` renders grouped Arabic navigation and active state from `navigation-items.ts`
+- `AppSidebar` reads real session user via `useSession()` from `next-auth/react` and passes `{ name, email, avatar: null }` to `NavUser`
+- `NavUser` shows real authenticated user name/email/initials in the sidebar footer and dropdown
+- `NavUser` logout uses `signOut({ callbackUrl: '/login', redirect: true })` from `next-auth/react`
+- `NavUser` dropdown menu items for unavailable routes (الملف الشخصي / إعدادات الحساب / الإشعارات) are disabled and non-clickable
+- `DashboardHeader` renders `SidebarTrigger`, title, breadcrumb, theme toggle, and user placeholder
+- `navigation-items.ts` is the single source for nav groups + route metadata used by sidebar/header
+- `SessionProvider` from `next-auth/react` is now wrapped in `src/app/providers.tsx`
 
 ## Out of Scope
 
-- Scanner, archive, and PDF generation features
-- Correspondence business logic
-- Auth logic
-- Prisma schema
-- API routes
-- New npm dependencies
-- User profile page or real user data in the header
+- Any backend business logic
+- Prisma schema and database operations
+- Auth/session data model changes
+- PDF/scanner/archive workflows
+- New dependencies
 
 ## Architecture Compliance
 
-- Sidebar and layout components live in `src/components/layout/` ✓
-- Dashboard layout (`src/app/(dashboard)/layout.tsx`) is thin — imports DashboardShell only ✓
+- Dashboard layout remains thin in `src/app/(dashboard)/layout.tsx` ✓
+- Shared shell components stay under `src/components/layout` ✓
+- shadcn sidebar primitives remain in use (`SidebarProvider`, `Sidebar`, `SidebarTrigger`, `SidebarInset`) ✓
 - No Prisma/server imports in layout components ✓
-- No hardcoded hex colors — all semantic tokens from globals.css ✓
-- Client components used only where required (state, hooks, localStorage) ✓
-- Server layout (`layout.tsx`) and navigation data (`navigation-items.ts`) have no client code ✓
+- Semantic tokens only (no hardcoded hex colors in shell changes) ✓
 
 ## Files Created
 
-- `src/components/layout/navigation-items.ts`
-- `src/components/layout/theme-toggle.tsx`
-- `src/components/layout/dashboard-sidebar.tsx`
-- `src/components/layout/dashboard-header.tsx`
-- `src/components/layout/dashboard-shell.tsx`
-- `src/components/layout/layout-shell.md` (this file)
+- `src/lib/api-client.ts` — central `appFetch` wrapper with 401/403 auto-logout
 
 ## Files Modified
 
-- `src/app/globals.css` — replaced `@media (prefers-color-scheme: dark) { :root {} }` with `html.dark {}` for class-based dark mode
-- `src/app/layout.tsx` — added `<head>` with inline theme init script
-- `src/app/(dashboard)/layout.tsx` — now wraps children in `<DashboardShell>`
-- `src/components/layout/index.ts` — exports all layout components
+- `src/app/(dashboard)/layout.tsx`
+- `src/app/providers.tsx` — added `SessionProvider`
+- `src/components/layout/navigation-items.ts`
+- `src/components/layout/app-sidebar.tsx` — removed hardcoded user, added `useSession()`, `NavUser` now receives real data
+- `src/components/layout/nav-user.tsx` — removed fake `/logout` link, removed unused `Link`/`BadgeCheck`/`ShieldCheck` imports, added `signOut`, disabled unavailable route items
+- `src/components/layout/dashboard-shell.tsx`
+- `src/components/layout/dashboard-header.tsx`
+- `src/components/ui/sidebar.tsx`
+- `src/components/ui/dropdown-menu.tsx`
+- `src/components/layout/layout-shell.md`
+- `src/features/dashboard/home/api/dashboard.api.ts` — `appFetch`
+- `src/features/archive/final-archive/api/final-archive.api.ts` — `appFetch`
+- `src/features/archive/archived-correspondence/api/archived-correspondence.api.ts` — `appFetch`
+- `src/features/correspondence/archive-handover/api/archive-handover.api.ts` — `appFetch`
+- `src/features/correspondence/digital-generated/create/api/digital-generated.api.ts` — `appFetch`
+- `src/features/correspondence/scanned-physical/create/api/scanned-physical.api.ts` — `appFetch`
 
 ## Frontend Status
 
-Complete. All components implemented and wired.
+Completed for scope. shadcn sidebar wiring and RTL adaptation are live with route-aware header/breadcrumb and grouped navigation.
 
 ## Validation Performed
 
-- `npx prisma validate` — ✅ PASS (schema valid)
-- `npx prisma generate` — ✅ PASS
-- `npm run lint -- --max-warnings=0` — ✅ PASS (0 errors, 0 warnings)
-- `npm run build` — ✅ PASS (all 16 routes compiled, 0 TS errors)
-- Boundary: no server/Prisma imports in layout — ✅ CLEAN
-- Boundary: no hardcoded hex colors — ✅ CLEAN
-- Runtime smoke test: /dashboard → 200, /correspondence/digital-generated/create → 200
-- HTML checks: shell, sidebar, theme script, RTL, primary color, nav link — all ✅
+- `pnpm prisma validate` ✓
+- `pnpm prisma generate` ✓
+- `pnpm lint --max-warnings=0` ✓
+- `pnpm build` ✓
+- Boundary checks (no Prisma/layout leaks, no hardcoded colors in shell scope, no random/time keys, no script tags) ✓
+- Runtime checks on dashboard + correspondence + archive routes (header, breadcrumb, nav groups, disabled placeholders, theme toggle, sidebar expand/collapse) ✓
 
 ## Latest Changes
 
-- Initial implementation of full dashboard shell
-- RTL-aware sidebar (right-side on desktop, right-side overlay on mobile)
-- Class-based dark mode: `html.dark` in globals.css, init script in layout head
-- Active route highlighting via `usePathname()`
-- Disabled/coming-soon nav items rendered with opacity and "لاحقًا" badge
-- Mobile sidebar overlay using fixed positioning (no Sheet dependency needed)
-- ThemeToggle shows correct icon after mount (avoids SSR mismatch)
-- A4 preview protected: lives in iframe srcDoc, unaffected by html.dark class
+- Replaced placeholder/sample shadcn sidebar content with real Arabic route groups.
+- Added required icons for all real routes and disabled “لاحقًا” settings entries.
+- Ensured exact active matching per route to avoid over-activating archive items.
+- Moved route title/breadcrumb mapping to `navigation-items.ts` to avoid duplicated nav metadata.
+- Refactored `DashboardShell` to use shadcn `SidebarProvider`/`SidebarInset` flow.
+- Updated `DashboardHeader` to use `SidebarTrigger` and Arabic breadcrumb.
+- Fixed undefined `cn-rtl-flip` usage in shared UI primitives with explicit RTL-safe transforms.
+- Fixed missing CSS variables (`--sidebar-width`, `--sidebar-width-icon`) in `SidebarProvider`; this was causing desktop reserved gap width to collapse and main content to render under the fixed sidebar.
+- Fixed shell wrapper direction interaction with shadcn gap mechanics; removed forced `flex-row-reverse` so right-side gap reservation aligns with `side="right"` and content ends at sidebar boundary.
+- Restored sidebar footer using shadcn footer pattern with user profile block and settings shortcut.
+
+**NavUser + Auth (2026-05-20):**
+
+- Added `SessionProvider` to `src/app/providers.tsx` so `useSession()` is available app-wide.
+- `AppSidebar` now uses `useSession()` to read real authenticated user (name, email). Removed hardcoded fake `data.user`.
+- `NavUser` dropdown logout replaced with `signOut({ callbackUrl: '/login', redirect: true })`.
+- `NavUser` removed broken imports (`BadgeCheck`, `ShieldCheck`, `Link`).
+- Unavailable nav items (الملف الشخصي, إعدادات الحساب, الإشعارات) are disabled — no broken links.
+- Created `src/lib/api-client.ts` with `appFetch()`: drop-in for `fetch` across protected API clients; auto-triggers `signOut` on 401/403 (excludes `/api/auth/` and `/api/v1/auth/`).
+- All 6 protected feature API clients updated to use `appFetch`.
 
 ## Remaining Issues
 
-- User area in header is a placeholder ("م" initial). Real user data integration pending auth session.
-- Page title map is static; future pages must be added to `pageTitles` in `dashboard-header.tsx`.
+- `/profile`, `/account-settings`, `/notifications` routes don't exist yet — items are disabled in the dropdown.
+- Playwright tool viewport remains desktop-sized in this environment, so true handheld drawer UX (390x844 with right-side sheet animation) could not be fully asserted via automated snapshot.
 
 ## Next Safe Step
 
-Integrate real session user data into the header user area (via `useSession` from next-auth/react).
+Implement `/profile` and `/account-settings` routes when user management scope is added, then re-enable those dropdown items.

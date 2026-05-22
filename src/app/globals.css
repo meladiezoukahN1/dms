@@ -1,83 +1,243 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #111827;
+  --radius: 0.625rem;
+
+  /* Light mode */
+  --background: #f7f6f3;
+  --foreground: #15150f;
+
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #15150f;
+
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #0f4c81;
-  --primary-foreground: #f8fafc;
-  --secondary: #e5e7eb;
-  --secondary-foreground: #111827;
-  --muted: #eef2f7;
-  --muted-foreground: #4b5563;
-  --accent: #dbe4ee;
-  --accent-foreground: #111827;
-  --destructive: #b42318;
+  --popover-foreground: #15150f;
+
+  /* Brand identity */
+  --primary: #d4ae42;
+  --primary-foreground: #15150f;
+
+  --secondary: #f1ead8;
+  --secondary-foreground: #15150f;
+
+  --muted: #eeeae2;
+  --muted-foreground: #5f604f;
+
+  --accent: #f1d96a;
+  --accent-foreground: #15150f;
+
+  --destructive: #ee5455;
   --destructive-foreground: #ffffff;
-  --border: #d0d7e2;
-  --input: #d0d7e2;
-  --ring: #0f4c81;
-  --radius: 0.75rem;
+
+  --border: #e5e3e1;
+  --input: #d8d3c8;
+  --ring: #d4ae42;
+
+  /* Charts */
+  --chart-1: #d4ae42;
+  --chart-2: #9f8438;
+  --chart-3: #17b5be;
+  --chart-4: #ee5455;
+  --chart-5: #b886ce;
+
+  /* Sidebar: dark even in light mode */
+  --sidebar: #060a0b;
+  --sidebar-foreground: #fefefe;
+  --sidebar-primary: #d4ae42;
+  --sidebar-primary-foreground: #060a0b;
+  --sidebar-accent: #15150f;
+  --sidebar-accent-foreground: #f1d96a;
+  --sidebar-border: #2a2618;
+  --sidebar-ring: #d4ae42;
+
+  /* Sidebar layout variables */
+  --sidebar-width: 18rem;
+  --sidebar-width-icon: 3rem;
+}
+
+.dark {
+  /* Dark mode */
+  --background: #0f100b;
+  --foreground: #fefefe;
+
+  --card: #181810;
+  --card-foreground: #fefefe;
+
+  --popover: #181810;
+  --popover-foreground: #fefefe;
+
+  --primary: #d4ae42;
+  --primary-foreground: #060a0b;
+
+  --secondary: #252418;
+  --secondary-foreground: #fefefe;
+
+  --muted: #252418;
+  --muted-foreground: #c9c2aa;
+
+  --accent: #9f8438;
+  --accent-foreground: #fefefe;
+
+  --destructive: #ee5455;
+  --destructive-foreground: #ffffff;
+
+  --border: #3a3524;
+  --input: #3a3524;
+  --ring: #f1d96a;
+
+  --chart-1: #f1d96a;
+  --chart-2: #d4ae42;
+  --chart-3: #17b5be;
+  --chart-4: #ee5455;
+  --chart-5: #b886ce;
+
+  --sidebar: #060a0b;
+  --sidebar-foreground: #fefefe;
+  --sidebar-primary: #d4ae42;
+  --sidebar-primary-foreground: #060a0b;
+  --sidebar-accent: #15150f;
+  --sidebar-accent-foreground: #f1d96a;
+  --sidebar-border: #3a3524;
+  --sidebar-ring: #f1d96a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
 }
-
-html.dark {
-  --background: #0b1220;
-  --foreground: #e5edf7;
-  --card: #121b2b;
-  --card-foreground: #e5edf7;
-  --popover: #121b2b;
-  --popover-foreground: #e5edf7;
-  --primary: #5fa8e5;
-  --primary-foreground: #081521;
-  --secondary: #1e293b;
-  --secondary-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #9aa8bd;
-  --accent: #24324a;
-  --accent-foreground: #e5edf7;
-  --destructive: #f97066;
-  --destructive-foreground: #1f0e0d;
-  --border: #2a3b57;
-  --input: #2a3b57;
-  --ring: #5fa8e5;
-}
-
-/* Enable Tailwind dark: utilities when html has .dark class */
-@variant dark (&:where(.dark, .dark *));
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+}
+
+.sidebar-wrapper {
+  --sidebar-width: 18rem;
+  --sidebar-width-icon: 3rem;
+}
+
+.chart-dot {
+  background-color: var(--chart-dot-color);
+}
+
+.chart-dot-gold {
+  --chart-dot-color: #d4ae42;
+}
+
+.chart-dot-bronze {
+  --chart-dot-color: #9f8438;
+}
+
+.chart-dot-info {
+  --chart-dot-color: #17b5be;
+}
+
+.chart-dot-danger {
+  --chart-dot-color: #ee5455;
+}
+
+.chart-dot-purple {
+  --chart-dot-color: #b886ce;
+}
+
+.chart-dot-default {
+  --chart-dot-color: #d4ae42;
+}
+
+.chart-indicator {
+  border: 1px solid var(--chart-indicator-color);
+  background-color: var(--chart-indicator-color);
+}
+
+.chart-indicator-gold {
+  --chart-indicator-color: #d4ae42;
+}
+
+.chart-indicator-bronze {
+  --chart-indicator-color: #9f8438;
+}
+
+.chart-indicator-info {
+  --chart-indicator-color: #17b5be;
+}
+
+.chart-indicator-danger {
+  --chart-indicator-color: #ee5455;
+}
+
+.chart-indicator-purple {
+  --chart-indicator-color: #b886ce;
+}
+
+.chart-indicator-default {
+  --chart-indicator-color: #d4ae42;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }

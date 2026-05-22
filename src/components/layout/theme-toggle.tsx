@@ -1,7 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
-
 function SunIcon() {
   return (
     <svg
@@ -47,11 +45,11 @@ function MoonIcon() {
 }
 
 export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
   const toggle = () => {
-    setTheme(isDark ? "light" : "dark");
+    const root = document.documentElement;
+    const nextIsDark = !root.classList.contains("dark");
+    root.classList.toggle("dark", nextIsDark);
+    localStorage.setItem("theme", nextIsDark ? "dark" : "light");
   };
 
   return (
@@ -59,8 +57,17 @@ export function ThemeToggle() {
       onClick={toggle}
       className="flex items-center justify-center w-9 h-9 rounded-md transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
       aria-label="تبديل المظهر"
+      title="تبديل المظهر"
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
+      <span className="relative inline-flex h-4 w-4 items-center justify-center">
+        <span className="absolute inset-0 flex items-center justify-center dark:hidden">
+          <MoonIcon />
+        </span>
+        <span className="absolute inset-0 hidden items-center justify-center dark:flex">
+          <SunIcon />
+        </span>
+      </span>
+      <span className="sr-only">تبديل المظهر</span>
     </button>
   );
 }

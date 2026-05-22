@@ -5,6 +5,7 @@ import {
   type CreatedDigitalCorrespondenceDto,
   type GeneratedDigitalCorrespondencePdfDto,
 } from "../types";
+import { appFetch } from "@/lib/api-client";
 
 const DIGITAL_GENERATED_ENDPOINT = "/api/v1/correspondence/digital-generated";
 
@@ -39,7 +40,7 @@ function toApiError<T>(response: Response, json: ApiResponse<T>): ApiClientError
 export async function createDigitalGeneratedDraft(
   payload: CreateDigitalCorrespondencePayload
 ): Promise<CreatedDigitalCorrespondenceDto> {
-  const response = await fetch(DIGITAL_GENERATED_ENDPOINT, {
+  const response = await appFetch(DIGITAL_GENERATED_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -72,7 +73,7 @@ export async function createDigitalGeneratedDraft(
 export async function generateDigitalGeneratedPdf(
   correspondenceId: string
 ): Promise<GeneratedDigitalCorrespondencePdfDto> {
-  const response = await fetch(`${DIGITAL_GENERATED_ENDPOINT}/${correspondenceId}/generate-pdf`, {
+  const response = await appFetch(`${DIGITAL_GENERATED_ENDPOINT}/${correspondenceId}/generate-pdf`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

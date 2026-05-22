@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { SessionProvider } from "next-auth/react";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -21,13 +21,8 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <SessionProvider>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </NextThemesProvider>
+    </SessionProvider>
   );
 }

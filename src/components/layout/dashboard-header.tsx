@@ -1,71 +1,77 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "./theme-toggle";
+import { ChevronLeft } from "lucide-react";
 
-const pageTitles: Record<string, string> = {
-  "/dashboard": "الرئيسية",
-  "/correspondence/digital-generated/create": "إنشاء مراسلة رقمية",
+import { ThemeToggle } from "./theme-toggle";
+import { dashboardRouteMeta } from "./navigation-items";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+
+type BreadcrumbItem = {
+  label: string;
+  href?: string;
 };
 
 function getPageTitle(pathname: string): string {
-  return pageTitles[pathname] ?? "لوحة التحكم";
+  return dashboardRouteMeta[pathname]?.title ?? "لوحة التحكم";
 }
 
-function MenuIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </svg>
-  );
+function getBreadcrumb(pathname: string): BreadcrumbItem[] {
+  const labels = dashboardRouteMeta[pathname]?.breadcrumb ?? ["الرئيسية", "لوحة التحكم"];
+  return labels.map((label, index) => {
+    if (index === 0) {
+      return { label, href: "/dashboard" };
+    }
+
+    return { label };
+  });
 }
 
-interface DashboardHeaderProps {
-  onMenuClick: () => void;
-}
-
-export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const pathname = usePathname();
   const title = getPageTitle(pathname);
+  const breadcrumb = getBreadcrumb(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/80 backdrop-blur-sm px-4 shrink-0">
-      {/* Mobile sidebar trigger */}
-      <button
-        onClick={onMenuClick}
-        className="md:hidden flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-        aria-label="فتح القائمة الجانبية"
-      >
-        <MenuIcon />
-      </button>
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur supports-backdrop-filter:bg-background/80 md:px-4">
+      <SidebarTrigger className="shrink-0" />
+      <Separator orientation="vertical" className="h-4" />
 
-      {/* Page title */}
-      <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="truncate text-sm font-semibold text-foreground">{title}</h1>
+        <nav aria-label="Breadcrumb" className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+          {breadcrumb.map((item, index) => {
+            const isLast = index === breadcrumb.length - 1;
 
-      {/* Spacer */}
+            return (
+              <div key={`${item.label}-${index}`} className="flex items-center gap-1">
+                {item.href && !isLast ? (
+                  <Link href={item.href} className="hover:text-foreground transition-colors">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className={isLast ? "text-foreground" : undefined}>{item.label}</span>
+                )}
+                {!isLast ? <ChevronLeft className="size-3" aria-hidden="true" /> : null}
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+
       <div className="flex-1" />
 
-      {/* Actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
-        <div
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-bold select-none"
+        {/* <div
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground select-none"
           aria-label="حساب المستخدم"
-          title="المستخدم"
+          title="المستخدم الحالي"
         >
           م
-        </div>
+        </div> */}
       </div>
     </header>
   );
