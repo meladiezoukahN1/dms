@@ -18,20 +18,27 @@
 //   });
 
 // if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not defined");
+function createPrismaAdapter() {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not defined");
+  }
+
+  return new PrismaMariaDb(databaseUrl);
 }
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
+    adapter: createPrismaAdapter(),
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
