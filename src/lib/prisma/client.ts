@@ -2,11 +2,8 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@prisma/client";
 
 function createPrismaAdapter() {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
-
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required to initialize Prisma Client");
-  }
+  const databaseUrl =
+    process.env.DATABASE_URL?.trim() || "mysql://root:root@127.0.0.1:3306/dms";
 
   return new PrismaMariaDb(databaseUrl);
 }
