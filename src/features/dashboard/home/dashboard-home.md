@@ -174,6 +174,8 @@ Frontend feature that displays a comprehensive dashboard home page with statisti
 - Added latest archived correspondences panel
 - Removed hardcoded status color classes from recent correspondence list
 - Removed dashboard API empty-data fallback on auth failure
+- Fixed dashboard overview request URL to same-origin relative path (`/api/v1/dashboard/overview`) to prevent cross-origin redirects/CORS failures when local ports differ.
+- Clarified env precedence issue: `.env.local` overrides `.env`, which previously caused stale `localhost:3000` client API URLs.
 
 ## Browser Support
 
@@ -183,7 +185,7 @@ Frontend feature that displays a comprehensive dashboard home page with statisti
 
 ## Remaining Issues
 
-- None known at feature level
+- Ensure `.env.local` and `.env` use consistent local URLs to avoid confusion during development.
 
 ## Runtime Checklist (Pre-build)
 

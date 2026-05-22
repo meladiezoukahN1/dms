@@ -7,7 +7,7 @@ import { appFetch } from '@/lib/api-client';
 
 export async function fetchDashboardOverview(): Promise<DashboardOverview> {
   const response = await appFetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/dashboard/overview`,
+    '/api/v1/dashboard/overview',
     {
       method: 'GET',
       headers: {
